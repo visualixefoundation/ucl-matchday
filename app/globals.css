@@ -1,0 +1,359 @@
+:root {
+  --pitch: #0b1f17;      /* near-black deep green — night pitch */
+  --turf: #163c2c;       /* pitch green */
+  --chalk: #f5f3ea;      /* line-marking cream */
+  --floodlight: #f2c94c; /* amber floodlight accent */
+  --steel: #8a998f;      /* muted stand grey-green, secondary text */
+  --line: #274a38;       /* hairline dividers on dark surfaces */
+
+  --font-display: "Oswald", sans-serif;
+  --font-body: "Inter", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background: var(--pitch);
+  color: var(--chalk);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Header */
+
+.site-header {
+  border-bottom: 1px solid var(--line);
+  padding: 20px 0;
+}
+
+.site-header__inner {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.4rem;
+  letter-spacing: 0.01em;
+}
+
+.wordmark__sub {
+  color: var(--floodlight);
+  font-size: 0.95rem;
+  margin-left: 10px;
+  font-weight: 500;
+}
+
+.site-nav {
+  display: flex;
+  gap: 24px;
+}
+
+.site-nav a {
+  font-size: 0.92rem;
+  color: var(--steel);
+  border-bottom: 2px solid transparent;
+  padding-bottom: 2px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.site-nav a:hover {
+  color: var(--chalk);
+  border-color: var(--floodlight);
+}
+
+/* Page sections */
+
+.page {
+  padding: 40px 0 64px;
+}
+
+.page__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.page__heading h1 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.9rem;
+  margin: 0;
+}
+
+.page__date {
+  color: var(--steel);
+  font-size: 0.95rem;
+}
+
+/* Matchday groups */
+
+.matchday {
+  margin-bottom: 36px;
+}
+
+.matchday__label {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  color: var(--steel);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+}
+
+/* Match row (scoreboard style, not cards) */
+
+.match-row {
+  display: grid;
+  grid-template-columns: 64px 1fr auto 1fr;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.match-row__status {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--steel);
+}
+
+.match-row__status--live {
+  color: var(--floodlight);
+}
+
+.match-row__team {
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.match-row__team--away {
+  justify-content: flex-end;
+  text-align: right;
+  flex-direction: row-reverse;
+}
+
+.match-row__crest {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.match-row__score {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  min-width: 64px;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.match-row__score--pending {
+  color: var(--steel);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* Results / highlights list */
+
+.result-card {
+  border-bottom: 1px solid var(--line);
+  padding: 22px 0;
+}
+
+.result-card__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.result-card__teams {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 500;
+}
+
+.result-card__date {
+  color: var(--steel);
+  font-size: 0.85rem;
+}
+
+.result-card__video {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--turf);
+  overflow: hidden;
+}
+
+.result-card__video iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* Empty / error states */
+
+.empty-state {
+  border: 1px solid var(--line);
+  padding: 28px 24px;
+  color: var(--steel);
+  font-size: 0.95rem;
+}
+
+.empty-state strong {
+  color: var(--chalk);
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--font-display);
+  font-weight: 500;
+}
+
+/* Footer */
+
+.site-footer {
+  border-top: 1px solid var(--line);
+  padding: 20px 0 40px;
+  color: var(--steel);
+  font-size: 0.82rem;
+}
+
+/* Refresh control */
+
+.refresh-btn {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--pitch);
+  background: var(--floodlight);
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.refresh-btn:hover {
+  filter: brightness(1.05);
+}
+
+@media (max-width: 520px) {
+  .match-row {
+    grid-template-columns: 48px 1fr auto 1fr;
+    gap: 8px;
+  }
+  .match-row__team {
+    font-size: 0.9rem;
+  }
+}
+
+/* Countdown banner */
+
+.countdown {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--turf);
+  padding: 14px 18px;
+  margin-bottom: 28px;
+  border-left: 3px solid var(--floodlight);
+}
+
+.countdown__label {
+  font-size: 0.85rem;
+  color: var(--chalk);
+}
+
+.countdown__time {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--floodlight);
+  letter-spacing: 0.02em;
+}
+
+/* Standings table */
+
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.standings-table th,
+.standings-table td {
+  padding: 10px 8px;
+  text-align: center;
+  border-bottom: 1px solid var(--line);
+}
+
+.standings-table th {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 0.78rem;
+  color: var(--steel);
+  letter-spacing: 0.03em;
+}
+
+.standings-table__pos {
+  color: var(--steel);
+  width: 28px;
+}
+
+.standings-table__team {
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 160px;
+}
+
+.standings-table__pts {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--floodlight);
+}
+
+@media (max-width: 600px) {
+  .standings-table {
+    font-size: 0.78rem;
+  }
+  .standings-table th,
+  .standings-table td {
+    padding: 8px 4px;
+  }
+}
