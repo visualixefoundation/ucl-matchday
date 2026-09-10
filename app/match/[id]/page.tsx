@@ -7,6 +7,7 @@ import {
   parseScore,
   type MatchEvent
 } from "@/lib/highlightly";
+import { formatKickoffDateTime } from "@/lib/time";
 
 export const revalidate = 60;
 
@@ -43,13 +44,7 @@ export default async function MatchPage({
       : match.state.description
     : finished
       ? "Full time"
-      : new Date(match.date).toLocaleString([], {
-          weekday: "short",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit"
-        });
+      : formatKickoffDateTime(match.date);
 
   const events = match.events ?? [];
 

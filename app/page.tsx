@@ -1,27 +1,10 @@
 import { getMatchesWindow, type Match } from "@/lib/highlightly";
+import { dayKeyEAT, formatDayLabelEAT } from "@/lib/time";
 import RefreshButton from "./components/RefreshButton";
 import KickoffCountdown from "./components/KickoffCountdown";
 import MatchRow from "./components/MatchRow";
 
 export const revalidate = 90;
-
-function dayKey(iso: string) {
-  return iso.slice(0, 10);
-}
-
-function formatDayLabel(isoDate: string) {
-  const d = new Date(isoDate + "T12:00:00.000Z");
-  const today = new Date().toISOString().slice(0, 10);
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-  if (isoDate === today) return "Today";
-  if (isoDate === tomorrow) return "Tomorrow";
-  return d.toLocaleDateString([], {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC"
-  });
-}
 
 export default async function HomePage() {
   const today = new Date().toISOString().slice(0, 10);
@@ -35,9 +18,9 @@ export default async function HomePage() {
     errorMessage = err instanceof Error ? err.message : "Failed to load fixtures.";
   }
 
-  // Group by calendar day, then by round within the day
+  // Group by calendar day in EAT, then by round within the day
   const byDay = matches.reduce<Record<string, Match[]>>((acc, m) => {
-    const key = dayKey(m.date);
+    const key = dayKeyEAT(m.date);
     acc[key] = acc[key] ?? [];
     acc[key].push(m);
     return acc;
@@ -88,7 +71,7 @@ export default async function HomePage() {
 
         return (
           <section className="matchday" key={day}>
-            <div className="matchday__label">{formatDayLabel(day)}</div>
+            <div className="matchday__label">{formatDayLabelEAT(day)}</div>
             {Object.entries(byRound).map(([round, roundMatches]) => (
               <div key={round}>
                 {Object.keys(byRound).length > 1 && (

@@ -1,9 +1,6 @@
 import Link from "next/link";
 import { isLive, parseScore, type Match } from "@/lib/highlightly";
-
-function formatKickoff(dateIso: string) {
-  return new Date(dateIso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
+import { formatKickoffTime } from "@/lib/time";
 
 function statusLabel(match: Match) {
   const { description, clock } = match.state;
@@ -17,7 +14,7 @@ function statusLabel(match: Match) {
   ) {
     return "FT";
   }
-  return formatKickoff(match.date);
+  return formatKickoffTime(match.date);
 }
 
 export default function MatchRow({ match }: { match: Match }) {
