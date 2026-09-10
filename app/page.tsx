@@ -1,21 +1,26 @@
-import { getMatches, isLive, isFinished, parseScore, type Match } from "@/lib/highlightly";
+import { getMatchesWindow, type Match } from "@/lib/highlightly";
 import RefreshButton from "./components/RefreshButton";
 import KickoffCountdown from "./components/KickoffCountdown";
+import MatchRow from "./components/MatchRow";
 
 export const revalidate = 90;
 
-function formatKickoff(dateIso: string) {
-  return new Date(dateIso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+function dayKey(iso: string) {
+  return iso.slice(0, 10);
 }
 
-function statusLabel(match: Match) {
-  const { description, clock } = match.state;
-  if (isLive(description)) {
-    if (description.toLowerCase() === "half time") return "HT";
-    return clock != null ? `${clock}'` : description;
-  }
-  if (isFinished(description)) return "FT";
-  return formatKickoff(match.date);
+function formatDayLabel(isoDate: string) {
+  const d = new Date(isoDate + "T12:00:00.000Z");
+  const today = new Date().toISOString().slice(0, 10);
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+  if (isoDate === today) return "Today";
+  if (isoDate === tomorrow) return "Tomorrow";
+  return d.toLocaleDateString([], {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC"
+  });
 }
 
 export default async function HomePage() {
@@ -24,17 +29,21 @@ export default async function HomePage() {
   let errorMessage: string | null = null;
 
   try {
-    matches = await getMatches(today);
+    // 7-day window so non-match days still show the next fixtures
+    matches = await getMatchesWindow(today, 7);
   } catch (err) {
     errorMessage = err instanceof Error ? err.message : "Failed to load fixtures.";
   }
 
-  const grouped = matches.reduce<Record<string, Match[]>>((acc, m) => {
-    const round = m.round ?? "Matchday";
-    acc[round] = acc[round] ?? [];
-    acc[round].push(m);
+  // Group by calendar day, then by round within the day
+  const byDay = matches.reduce<Record<string, Match[]>>((acc, m) => {
+    const key = dayKey(m.date);
+    acc[key] = acc[key] ?? [];
+    acc[key].push(m);
     return acc;
   }, {});
+
+  const dayKeys = Object.keys(byDay).sort();
 
   const nextMatch = matches
     .filter((m) => m.state.description.toLowerCase() === "not started")
@@ -56,54 +65,43 @@ export default async function HomePage() {
 
       {errorMessage && (
         <div className="empty-state">
-          <strong>Couldn't load today's fixtures</strong>
+          <strong>Couldn&apos;t load fixtures</strong>
           {errorMessage}
         </div>
       )}
 
       {!errorMessage && matches.length === 0 && (
         <div className="empty-state">
-          <strong>No Champions League matches today</strong>
-          Check back on the next matchday, or see recent results and highlights.
+          <strong>No Champions League matches in the next week</strong>
+          Check the standings or results, or come back closer to the next matchday.
         </div>
       )}
 
-      {Object.entries(grouped).map(([round, roundMatches]) => (
-        <section className="matchday" key={round}>
-          <div className="matchday__label">{round}</div>
-          {roundMatches.map((match) => {
-            const score = parseScore(match.state.score.current);
-            return (
-              <div className="match-row" key={match.id}>
-                <div
-                  className={`match-row__status ${
-                    isLive(match.state.description) ? "match-row__status--live" : ""
-                  }`}
-                >
-                  {statusLabel(match)}
-                </div>
-                <div className="match-row__team">
-                  {match.homeTeam.logo && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img className="match-row__crest" src={match.homeTeam.logo} alt="" />
-                  )}
-                  {match.homeTeam.name}
-                </div>
-                <div className={`match-row__score ${score == null ? "match-row__score--pending" : ""}`}>
-                  {score ? `${score[0]} – ${score[1]}` : "vs"}
-                </div>
-                <div className="match-row__team match-row__team--away">
-                  {match.awayTeam.logo && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img className="match-row__crest" src={match.awayTeam.logo} alt="" />
-                  )}
-                  {match.awayTeam.name}
-                </div>
+      {dayKeys.map((day) => {
+        const dayMatches = byDay[day];
+        const byRound = dayMatches.reduce<Record<string, Match[]>>((acc, m) => {
+          const round = m.round ?? "Matchday";
+          acc[round] = acc[round] ?? [];
+          acc[round].push(m);
+          return acc;
+        }, {});
+
+        return (
+          <section className="matchday" key={day}>
+            <div className="matchday__label">{formatDayLabel(day)}</div>
+            {Object.entries(byRound).map(([round, roundMatches]) => (
+              <div key={round}>
+                {Object.keys(byRound).length > 1 && (
+                  <div className="matchday__sublabel">{round}</div>
+                )}
+                {roundMatches.map((match) => (
+                  <MatchRow key={match.id} match={match} />
+                ))}
               </div>
-            );
-          })}
-        </section>
-      ))}
+            ))}
+          </section>
+        );
+      })}
     </div>
   );
 }
