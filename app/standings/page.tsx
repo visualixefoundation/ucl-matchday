@@ -1,4 +1,5 @@
-import { getStandings, type StandingRow } from "@/lib/highlightly";
+import Link from "next/link";
+import { getStandings, sortStandings, type StandingRow } from "@/lib/highlightly";
 
 export const revalidate = 3600; // standings only change ~hourly after matches finish
 
@@ -20,7 +21,7 @@ export default async function StandingsPage() {
 
       {errorMessage && (
         <div className="empty-state">
-          <strong>Couldn't load standings</strong>
+          <strong>Couldn&apos;t load standings</strong>
           {errorMessage}
         </div>
       )}
@@ -35,35 +36,36 @@ export default async function StandingsPage() {
       {standings?.groups.map((group) => (
         <section className="matchday" key={group.name}>
           <div className="matchday__label">{group.name}</div>
-          <table className="standings-table">
-            <thead>
-              <tr>
-                <th className="standings-table__pos">#</th>
-                <th className="standings-table__team">Team</th>
-                <th>P</th>
-                <th>W</th>
-                <th>D</th>
-                <th>L</th>
-                <th>GF</th>
-                <th>GA</th>
-                <th>GD</th>
-                <th>Pts</th>
-              </tr>
-            </thead>
-            <tbody>
-              {group.standings
-                .sort((a, b) => a.position - b.position)
-                .map((row: StandingRow) => {
+          <div className="standings-scroll">
+            <table className="standings-table">
+              <thead>
+                <tr>
+                  <th className="standings-table__pos">#</th>
+                  <th className="standings-table__team">Team</th>
+                  <th>P</th>
+                  <th>W</th>
+                  <th>D</th>
+                  <th>L</th>
+                  <th>GF</th>
+                  <th>GA</th>
+                  <th>GD</th>
+                  <th>Pts</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortStandings(group.standings).map((row: StandingRow) => {
                   const gd = row.total.scoredGoals - row.total.receivedGoals;
                   return (
                     <tr key={row.team.id}>
                       <td className="standings-table__pos">{row.position}</td>
                       <td className="standings-table__team">
-                        {row.team.logo && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img className="match-row__crest" src={row.team.logo} alt="" />
-                        )}
-                        {row.team.name}
+                        <Link href={`/team/${row.team.id}`} className="standings-table__team-link">
+                          {row.team.logo && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img className="match-row__crest" src={row.team.logo} alt="" />
+                          )}
+                          {row.team.name}
+                        </Link>
                       </td>
                       <td>{row.total.games}</td>
                       <td>{row.total.wins}</td>
@@ -76,8 +78,9 @@ export default async function StandingsPage() {
                     </tr>
                   );
                 })}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </section>
       ))}
     </div>
