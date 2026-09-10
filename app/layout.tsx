@@ -31,9 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <nav className="site-nav">
               <a href="/">Fixtures &amp; Scores</a>
               <a href="/standings">Standings</a>
-              {/* Results/highlights page is built (app/results/page.tsx) but held back for now.
-                  Re-add this link when you're ready to bring highlights back in:
-              <a href="/results">Results &amp; Highlights</a> */}
+              <a href="/results">Results &amp; Highlights</a>
             </nav>
           </div>
         </header>
