@@ -11,17 +11,44 @@ import { formatKickoffDateTime } from "@/lib/time";
 
 export const revalidate = 60;
 
-function eventLabel(e: MatchEvent): string {
-  const player =
-    typeof e.player === "string" ? e.player : e.player?.name ?? "";
-  const team = typeof e.team === "string" ? e.team : e.team?.name ?? "";
-  const bits = [e.type, player, team, e.description].filter(Boolean);
-  return bits.join(" · ") || "Event";
+function eventTeamName(e: MatchEvent): string {
+  if (typeof e.team === "string") return e.team;
+  return e.team?.name ?? "";
+}
+
+function eventPlayerName(e: MatchEvent): string {
+  if (typeof e.player === "string") return e.player;
+  return e.player?.name ?? "";
 }
 
 function eventTime(e: MatchEvent): string {
   if (e.time == null) return "";
   return typeof e.time === "number" ? `${e.time}'` : String(e.time);
+}
+
+function normalizeName(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function isHomeEvent(
+  e: MatchEvent,
+  homeName: string,
+  awayName: string
+): boolean | null {
+  const team = eventTeamName(e);
+  if (!team) return null;
+  const t = normalizeName(team);
+  const h = normalizeName(homeName);
+  const a = normalizeName(awayName);
+  if (t && h && (t === h || t.includes(h) || h.includes(t))) return true;
+  if (t && a && (t === a || t.includes(a) || a.includes(t))) return false;
+  return null;
+}
+
+function eventSummary(e: MatchEvent): string {
+  const type = e.type?.trim() || e.description?.trim() || "Event";
+  const player = eventPlayerName(e);
+  return player ? `${type} · ${player}` : type;
 }
 
 export default async function MatchPage({
@@ -109,13 +136,37 @@ export default async function MatchPage({
         {events.length > 0 && (
           <section className="match-detail__events">
             <h2 className="matchday__label">Events</h2>
-            <ul className="event-list">
-              {events.map((e, i) => (
-                <li key={i} className="event-list__item">
-                  <span className="event-list__time">{eventTime(e)}</span>
-                  <span>{eventLabel(e)}</span>
-                </li>
-              ))}
+            <ul className="event-timeline">
+              {events.map((e, i) => {
+                const side = isHomeEvent(e, match.homeTeam.name, match.awayTeam.name);
+                const sideClass =
+                  side === true
+                    ? "event-timeline__row--home"
+                    : side === false
+                      ? "event-timeline__row--away"
+                      : "event-timeline__row--neutral";
+                return (
+                  <li key={i} className={`event-timeline__row ${sideClass}`}>
+                    <div className="event-timeline__home">
+                      {side === true && (
+                        <span className="event-timeline__text">{eventSummary(e)}</span>
+                      )}
+                    </div>
+                    <div className="event-timeline__minute">{eventTime(e)}</div>
+                    <div className="event-timeline__away">
+                      {side === false && (
+                        <span className="event-timeline__text">{eventSummary(e)}</span>
+                      )}
+                      {side === null && (
+                        <span className="event-timeline__text event-timeline__text--muted">
+                          {eventSummary(e)}
+                          {eventTeamName(e) ? ` · ${eventTeamName(e)}` : ""}
+                        </span>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           </section>
         )}

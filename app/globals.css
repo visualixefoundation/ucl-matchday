@@ -225,14 +225,52 @@ a { color: inherit; text-decoration: none; }
   display: flex; flex-wrap: wrap; gap: 16px; color: var(--steel);
   font-size: 0.88rem; margin-bottom: 8px;
 }
-.event-list { list-style: none; padding: 0; margin: 0; }
-.event-list__item {
-  display: flex; gap: 14px; padding: 10px 0;
-  border-bottom: 1px solid var(--line); font-size: 0.92rem;
+
+/* Classic football timeline: home left · minute center · away right */
+.event-timeline {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
 }
-.event-list__time {
-  font-family: var(--font-display); color: var(--floodlight); min-width: 36px;
+.event-timeline__row {
+  display: grid;
+  grid-template-columns: 1fr 52px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.9rem;
 }
+.event-timeline__minute {
+  font-family: var(--font-display);
+  color: var(--floodlight);
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.event-timeline__home {
+  text-align: right;
+  display: flex;
+  justify-content: flex-end;
+}
+.event-timeline__away {
+  text-align: left;
+  display: flex;
+  justify-content: flex-start;
+}
+.event-timeline__text {
+  line-height: 1.35;
+}
+.event-timeline__text--muted {
+  color: var(--steel);
+}
+.event-timeline__row--home .event-timeline__home .event-timeline__text {
+  color: var(--chalk);
+}
+.event-timeline__row--away .event-timeline__away .event-timeline__text {
+  color: var(--chalk);
+}
+
 .back-link { font-size: 0.9rem; color: var(--steel); }
 .back-link:hover { color: var(--chalk); }
 
@@ -254,4 +292,9 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 520px) {
   .match-detail__score { font-size: 1.8rem; }
   .match-detail__crest { width: 40px; height: 40px; }
+  .event-timeline__row {
+    grid-template-columns: 1fr 40px 1fr;
+    gap: 6px;
+    font-size: 0.8rem;
+  }
 }
