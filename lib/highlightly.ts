@@ -2,12 +2,12 @@
 // the UEFA Champions League.
 //
 // Docs: https://highlightly.net/football-api/documentation/
-// Verified against the live docs on 2026-09-08 — the /matches response nests
-// state under `state.description` / `state.score.current`, not flat fields.
+// UCL leagueId is typically 2486 (confirm via /leagues?name=UEFA%20Champions%20League).
 
 const SOURCE = process.env.HIGHLIGHTLY_SOURCE === "rapidapi" ? "rapidapi" : "direct";
 const API_KEY = process.env.HIGHLIGHTLY_API_KEY;
-const LEAGUE_ID = process.env.UCL_LEAGUE_ID;
+// Fallback to documented UCL id so the site still works if env is missing on deploy.
+const LEAGUE_ID = process.env.UCL_LEAGUE_ID || "2486";
 
 const BASE_URL =
   SOURCE === "rapidapi"
@@ -127,15 +127,25 @@ export async function getMatches(date?: string): Promise<Match[]> {
   return Array.isArray(data) ? data : data.data ?? [];
 }
 
+/**
+ * Fetch matches across a date range.
+ * pastDays: how many days before startDate (inclusive of startDate via days).
+ * days: how many days from startDate forward.
+ */
 export async function getMatchesWindow(
   startDate: string,
-  days = 7
+  days = 7,
+  pastDays = 0
 ): Promise<Match[]> {
   if (!LEAGUE_ID) return [];
   const start = new Date(startDate + "T00:00:00.000Z");
-  const maxDays = Math.min(Math.max(days, 1), 14);
+  const back = Math.min(Math.max(pastDays, 0), 14);
+  const forward = Math.min(Math.max(days, 1), 14);
+  const offsets: number[] = [];
+  for (let i = -back; i < forward; i++) offsets.push(i);
+
   const results = await Promise.all(
-    Array.from({ length: maxDays }, (_, i) =>
+    offsets.map((i) =>
       getMatches(isoDateUTC(addDaysUTC(start, i))).catch(() => [] as Match[])
     )
   );
@@ -208,15 +218,24 @@ const FINISHED_DESCRIPTIONS = [
   "finished",
   "finished after penalties",
   "finished after extra time",
-  "awarded"
+  "awarded",
+  "ft",
+  "full time",
+  "full-time",
+  "match finished",
+  "ended"
 ];
 
 export function isLive(description: string): boolean {
-  return LIVE_DESCRIPTIONS.includes(description.toLowerCase());
+  const d = description.toLowerCase().trim();
+  return LIVE_DESCRIPTIONS.some((x) => d === x || d.includes(x));
 }
 
 export function isFinished(description: string): boolean {
-  return FINISHED_DESCRIPTIONS.includes(description.toLowerCase());
+  const d = description.toLowerCase().trim();
+  if (FINISHED_DESCRIPTIONS.some((x) => d === x || d.includes(x))) return true;
+  // API sometimes returns score + clock at 90 with non-live status
+  return d.includes("finished");
 }
 
 export function parseScore(current: string | null): [number, number] | null {

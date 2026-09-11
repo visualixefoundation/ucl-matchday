@@ -12,13 +12,12 @@ export default async function HomePage() {
   let errorMessage: string | null = null;
 
   try {
-    // 7-day window so non-match days still show the next fixtures
-    matches = await getMatchesWindow(today, 7);
+    // Past 4 days (FT results) + next 7 days (upcoming / live)
+    matches = await getMatchesWindow(today, 7, 4);
   } catch (err) {
     errorMessage = err instanceof Error ? err.message : "Failed to load fixtures.";
   }
 
-  // Group by calendar day in EAT, then by round within the day
   const byDay = matches.reduce<Record<string, Match[]>>((acc, m) => {
     const key = dayKeyEAT(m.date);
     acc[key] = acc[key] ?? [];
@@ -55,7 +54,7 @@ export default async function HomePage() {
 
       {!errorMessage && matches.length === 0 && (
         <div className="empty-state">
-          <strong>No Champions League matches in the next week</strong>
+          <strong>No Champions League matches in this window</strong>
           Check the standings or results, or come back closer to the next matchday.
         </div>
       )}
