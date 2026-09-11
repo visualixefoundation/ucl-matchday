@@ -1,10 +1,17 @@
 export function MatchRowSkeleton() {
   return (
     <div className="match-row match-row--skeleton" aria-hidden>
-      <div className="skeleton skeleton--sm" />
-      <div className="skeleton skeleton--md" />
-      <div className="skeleton skeleton--score" />
-      <div className="skeleton skeleton--md" />
+      <div className="match-row__team match-row__team--home">
+        <div className="skeleton skeleton--md" />
+        <div className="skeleton skeleton--sm" style={{ width: 28, height: 28, borderRadius: "50%" }} />
+      </div>
+      <div className="match-row__center">
+        <div className="skeleton skeleton--score" />
+      </div>
+      <div className="match-row__team match-row__team--away">
+        <div className="skeleton skeleton--sm" style={{ width: 28, height: 28, borderRadius: "50%" }} />
+        <div className="skeleton skeleton--md" />
+      </div>
     </div>
   );
 }

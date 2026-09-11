@@ -1,47 +1,64 @@
 import Link from "next/link";
-import { isLive, parseScore, type Match } from "@/lib/highlightly";
+import { isLive, isFinished, parseScore, type Match } from "@/lib/highlightly";
 import { formatKickoffTime } from "@/lib/time";
 
-function statusLabel(match: Match) {
+function centerLabel(match: Match): { main: string; sub?: string; live?: boolean } {
   const { description, clock } = match.state;
+  const score = parseScore(match.state.score.current);
+
   if (isLive(description)) {
-    if (description.toLowerCase() === "half time") return "HT";
-    return clock != null ? `${clock}'` : description;
+    const minute =
+      description.toLowerCase() === "half time"
+        ? "HT"
+        : clock != null
+          ? `${clock}'`
+          : "LIVE";
+    return {
+      main: score ? `${score[0]} – ${score[1]}` : minute,
+      sub: score ? minute : undefined,
+      live: true
+    };
   }
-  if (
-    description.toLowerCase().includes("finished") ||
-    description.toLowerCase() === "awarded"
-  ) {
-    return "FT";
+
+  if (isFinished(description)) {
+    return {
+      main: score ? `${score[0]} – ${score[1]}` : "FT",
+      sub: score ? "FT" : undefined
+    };
   }
-  return formatKickoffTime(match.date);
+
+  // Not started — kickoff time in the middle (Sevilla · 10:00 PM · Valencia)
+  return { main: formatKickoffTime(match.date) };
 }
 
 export default function MatchRow({ match }: { match: Match }) {
-  const score = parseScore(match.state.score.current);
-  const live = isLive(match.state.description);
+  const center = centerLabel(match);
 
   return (
     <Link href={`/match/${match.id}`} className="match-row match-row--link">
-      <div className={`match-row__status ${live ? "match-row__status--live" : ""}`}>
-        {statusLabel(match)}
-      </div>
-      <div className="match-row__team">
+      <div className="match-row__team match-row__team--home">
+        <span className="match-row__name">{match.homeTeam.name}</span>
         {match.homeTeam.logo && (
           // eslint-disable-next-line @next/next/no-img-element
           <img className="match-row__crest" src={match.homeTeam.logo} alt="" />
         )}
-        <span>{match.homeTeam.name}</span>
       </div>
-      <div className={`match-row__score ${score == null ? "match-row__score--pending" : ""}`}>
-        {score ? `${score[0]} – ${score[1]}` : "vs"}
+
+      <div
+        className={`match-row__center ${
+          center.live ? "match-row__center--live" : ""
+        }`}
+      >
+        <span className="match-row__center-main">{center.main}</span>
+        {center.sub && <span className="match-row__center-sub">{center.sub}</span>}
       </div>
+
       <div className="match-row__team match-row__team--away">
         {match.awayTeam.logo && (
           // eslint-disable-next-line @next/next/no-img-element
           <img className="match-row__crest" src={match.awayTeam.logo} alt="" />
         )}
-        <span>{match.awayTeam.name}</span>
+        <span className="match-row__name">{match.awayTeam.name}</span>
       </div>
     </Link>
   );
