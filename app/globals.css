@@ -227,10 +227,25 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* Classic football timeline: home left · minute center · away right */
+.event-timeline__legend {
+  display: grid;
+  grid-template-columns: 1fr 52px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 0 4px;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  color: var(--steel);
+}
+.event-timeline__legend-home { text-align: right; }
+.event-timeline__legend-mid { text-align: center; }
+.event-timeline__legend-away { text-align: left; }
+
 .event-timeline {
   list-style: none;
   padding: 0;
-  margin: 12px 0 0;
+  margin: 4px 0 0;
 }
 .event-timeline__row {
   display: grid;
@@ -260,6 +275,7 @@ a { color: inherit; text-decoration: none; }
 }
 .event-timeline__text {
   line-height: 1.35;
+  max-width: 100%;
 }
 .event-timeline__text--muted {
   color: var(--steel);
@@ -292,7 +308,8 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 520px) {
   .match-detail__score { font-size: 1.8rem; }
   .match-detail__crest { width: 40px; height: 40px; }
-  .event-timeline__row {
+  .event-timeline__row,
+  .event-timeline__legend {
     grid-template-columns: 1fr 40px 1fr;
     gap: 6px;
     font-size: 0.8rem;

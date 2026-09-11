@@ -26,10 +26,24 @@ function eventTime(e: MatchEvent): string {
   return typeof e.time === "number" ? `${e.time}'` : String(e.time);
 }
 
+/** Strip accents/punctuation so "Bodø/Glimt" matches "Bodo/Glimt". */
 function normalizeName(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 }
 
+function namesMatch(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  // partial contains either way (handles "Bayern" vs "Bayern Munich")
+  if (a.length >= 4 && b.length >= 4 && (a.includes(b) || b.includes(a))) return true;
+  return false;
+}
+
+/** true = home (left), false = away (right), null = unknown */
 function isHomeEvent(
   e: MatchEvent,
   homeName: string,
@@ -40,8 +54,8 @@ function isHomeEvent(
   const t = normalizeName(team);
   const h = normalizeName(homeName);
   const a = normalizeName(awayName);
-  if (t && h && (t === h || t.includes(h) || h.includes(t))) return true;
-  if (t && a && (t === a || t.includes(a) || a.includes(t))) return false;
+  if (namesMatch(t, h)) return true;
+  if (namesMatch(t, a)) return false;
   return null;
 }
 
@@ -49,6 +63,13 @@ function eventSummary(e: MatchEvent): string {
   const type = e.type?.trim() || e.description?.trim() || "Event";
   const player = eventPlayerName(e);
   return player ? `${type} · ${player}` : type;
+}
+
+function eventMinuteSortKey(e: MatchEvent): number {
+  if (e.time == null) return 999;
+  if (typeof e.time === "number") return e.time;
+  const m = String(e.time).match(/(\d+)/);
+  return m ? Number(m[1]) : 999;
 }
 
 export default async function MatchPage({
@@ -73,7 +94,9 @@ export default async function MatchPage({
       ? "Full time"
       : formatKickoffDateTime(match.date);
 
-  const events = match.events ?? [];
+  const events = [...(match.events ?? [])].sort(
+    (a, b) => eventMinuteSortKey(a) - eventMinuteSortKey(b)
+  );
 
   return (
     <div className="page wrap">
@@ -136,6 +159,11 @@ export default async function MatchPage({
         {events.length > 0 && (
           <section className="match-detail__events">
             <h2 className="matchday__label">Events</h2>
+            <div className="event-timeline__legend">
+              <span className="event-timeline__legend-home">{match.homeTeam.name}</span>
+              <span className="event-timeline__legend-mid">&apos;</span>
+              <span className="event-timeline__legend-away">{match.awayTeam.name}</span>
+            </div>
             <ul className="event-timeline">
               {events.map((e, i) => {
                 const side = isHomeEvent(e, match.homeTeam.name, match.awayTeam.name);
@@ -145,21 +173,22 @@ export default async function MatchPage({
                     : side === false
                       ? "event-timeline__row--away"
                       : "event-timeline__row--neutral";
+                const summary = eventSummary(e);
                 return (
                   <li key={i} className={`event-timeline__row ${sideClass}`}>
                     <div className="event-timeline__home">
                       {side === true && (
-                        <span className="event-timeline__text">{eventSummary(e)}</span>
+                        <span className="event-timeline__text">{summary}</span>
                       )}
                     </div>
                     <div className="event-timeline__minute">{eventTime(e)}</div>
                     <div className="event-timeline__away">
                       {side === false && (
-                        <span className="event-timeline__text">{eventSummary(e)}</span>
+                        <span className="event-timeline__text">{summary}</span>
                       )}
                       {side === null && (
                         <span className="event-timeline__text event-timeline__text--muted">
-                          {eventSummary(e)}
+                          {summary}
                           {eventTeamName(e) ? ` · ${eventTeamName(e)}` : ""}
                         </span>
                       )}
