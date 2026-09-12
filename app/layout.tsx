@@ -38,17 +38,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main>{children}</main>
         <footer className="site-footer">
           <div className="wrap site-footer__inner">
-            <span>
+            <p className="site-footer__copy">
+              © {new Date().getFullYear()}{" "}
+              <a
+                href="https://visualixe-foundation.vercel.app/"
+                className="site-footer__link"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Visualixe Foundation
+              </a>
+              . All rights reserved.
+            </p>
+            <p className="site-footer__tagline">Built with purpose</p>
+            <p className="site-footer__credit">
               Scores and highlights via Highlightly. Not affiliated with UEFA.
-            </span>
-            <a
-              href="https://visualixe-foundation.vercel.app/"
-              className="site-footer__link"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Visualixe Foundation
-            </a>
+            </p>
           </div>
         </footer>
       </body>
