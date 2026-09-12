@@ -10,6 +10,9 @@ import MatchRow from "@/app/components/MatchRow";
 
 export const revalidate = 300;
 
+const SUPERSPORT_UCL =
+  "https://www.supersport.com/football/uefa-champions-league";
+
 function formatHighlightDate(dateIso: string) {
   return new Date(dateIso).toLocaleDateString("en-GB", {
     weekday: "short",
@@ -26,9 +29,8 @@ export default async function ResultsPage() {
   let errorMessage: string | null = null;
 
   try {
-    // Overlaps home window so Next.js data cache can reuse those day fetches
     const [window, hl] = await Promise.all([
-      getMatchesWindow(today, 1, 3), // past 3 days + today = 4 calls max
+      getMatchesWindow(today, 1, 3),
       getHighlights().catch(() => [] as Highlight[])
     ]);
     finished = window
@@ -36,7 +38,7 @@ export default async function ResultsPage() {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     highlights = hl;
   } catch (err) {
-    errorMessage = err instanceof Error ? err.message : "Failed to load results.";
+    errorMessage = err instanceof Error ? err.message : "Failed to load highlights.";
   }
 
   const byDay = finished.reduce<Record<string, Match[]>>((acc, m) => {
@@ -50,20 +52,50 @@ export default async function ResultsPage() {
   return (
     <div className="page wrap">
       <div className="page__heading">
-        <h1>Results &amp; highlights</h1>
+        <h1>Highlights</h1>
+        <a
+          href={SUPERSPORT_UCL}
+          className="external-link"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Watch on SuperSport →
+        </a>
       </div>
+
+      <p className="page__intro">
+        Full-time scores below. For video highlights, open{" "}
+        <a
+          href={SUPERSPORT_UCL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-link"
+        >
+          SuperSport
+        </a>
+        .
+      </p>
 
       {errorMessage && (
         <div className="empty-state">
-          <strong>Couldn&apos;t load results</strong>
+          <strong>Couldn&apos;t load data</strong>
           {errorMessage}
         </div>
       )}
 
       {!errorMessage && finished.length === 0 && highlights.length === 0 && (
         <div className="empty-state">
-          <strong>No recent results yet</strong>
-          Full-time scores and highlights appear here after matchdays finish.
+          <strong>No recent highlights yet</strong>
+          Check{" "}
+          <a
+            href={SUPERSPORT_UCL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-link"
+          >
+            SuperSport
+          </a>{" "}
+          for Champions League videos, or come back after the next matchday.
         </div>
       )}
 
@@ -83,7 +115,7 @@ export default async function ResultsPage() {
 
       {highlights.length > 0 && (
         <section className="matchday">
-          <div className="matchday__label">Highlights</div>
+          <div className="matchday__label">Clips</div>
           {highlights.map((h) => (
             <article className="result-card" key={h.id}>
               <div className="result-card__meta">
@@ -108,6 +140,17 @@ export default async function ResultsPage() {
           ))}
         </section>
       )}
+
+      <div className="supersport-cta">
+        <a
+          href={SUPERSPORT_UCL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="supersport-cta__btn"
+        >
+          More UCL highlights on SuperSport →
+        </a>
+      </div>
     </div>
   );
 }

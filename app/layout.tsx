@@ -16,7 +16,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Matchday — UEFA Champions League",
-  description: "Fixtures, live scores, results and highlights for the Champions League."
+  description: "Fixtures, live scores, standings and highlights for the Champions League."
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -31,7 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <nav className="site-nav">
               <a href="/">Fixtures &amp; Scores</a>
               <a href="/standings">Standings</a>
-              <a href="/results">Results &amp; Highlights</a>
+              <a href="/results">Highlights</a>
             </nav>
           </div>
         </header>
@@ -52,7 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </p>
             <p className="site-footer__tagline">Built with purpose</p>
             <p className="site-footer__credit">
-              Scores and highlights via Highlightly. Not affiliated with UEFA.
+              Scores via Highlightly. Not affiliated with UEFA.
             </p>
           </div>
         </footer>
