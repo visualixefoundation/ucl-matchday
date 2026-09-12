@@ -4,7 +4,8 @@ import RefreshButton from "./components/RefreshButton";
 import KickoffCountdown from "./components/KickoffCountdown";
 import MatchRow from "./components/MatchRow";
 
-export const revalidate = 90;
+// Page-level ISR — avoids regenerating (and re-hitting API) every minute
+export const revalidate = 300;
 
 export default async function HomePage() {
   const today = new Date().toISOString().slice(0, 10);
@@ -12,8 +13,8 @@ export default async function HomePage() {
   let errorMessage: string | null = null;
 
   try {
-    // Past 4 days (FT results) + next 7 days (upcoming / live)
-    matches = await getMatchesWindow(today, 7, 4);
+    // Past 2 days + next 4 days = 6 API calls max (shared cache with /results)
+    matches = await getMatchesWindow(today, 4, 2);
   } catch (err) {
     errorMessage = err instanceof Error ? err.message : "Failed to load fixtures.";
   }

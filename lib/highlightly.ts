@@ -1,18 +1,24 @@
 // Thin wrapper around the Highlightly Football API, scoped to one competition:
 // the UEFA Champions League.
 //
-// Docs: https://highlightly.net/football-api/documentation/
-// UCL leagueId is typically 2486 (confirm via /leagues?name=UEFA%20Champions%20League).
+// Free tier = 100 req/day. Keep windows small and revalidate long so browsing
+// stays well under the limit.
 
 const SOURCE = process.env.HIGHLIGHTLY_SOURCE === "rapidapi" ? "rapidapi" : "direct";
 const API_KEY = process.env.HIGHLIGHTLY_API_KEY;
-// Fallback to documented UCL id so the site still works if env is missing on deploy.
 const LEAGUE_ID = process.env.UCL_LEAGUE_ID || "2486";
 
 const BASE_URL =
   SOURCE === "rapidapi"
     ? "https://football-highlights-api.p.rapidapi.com"
     : "https://soccer.highlightly.net";
+
+// Default cache TTLs (seconds) — long enough that light browsing reuses cache
+const REVALIDATE_MATCHES = 300; // 5 min
+const REVALIDATE_MATCH = 120;
+const REVALIDATE_STANDINGS = 3600;
+const REVALIDATE_HIGHLIGHTS = 600;
+const REVALIDATE_TEAM = 3600;
 
 function headers(): HeadersInit {
   if (!API_KEY) {
@@ -32,7 +38,7 @@ function headers(): HeadersInit {
 async function get<T>(
   path: string,
   params: Record<string, string | number | undefined> = {},
-  revalidate = 90
+  revalidate = REVALIDATE_MATCHES
 ): Promise<T> {
   const url = new URL(BASE_URL + path);
   for (const [key, value] of Object.entries(params)) {
@@ -102,7 +108,6 @@ export type MatchEvent = {
   player?: string | { name?: string };
   team?: string | { name?: string };
   description?: string;
-  /** Player coming ON (substitution). API: player = off, substituted = on. */
   substituted?: string | null;
   assist?: string | null;
 };
@@ -121,29 +126,32 @@ export type Highlight = {
 export async function getMatches(date?: string): Promise<Match[]> {
   if (!LEAGUE_ID) return [];
   const day = date ?? new Date().toISOString().slice(0, 10);
-  const data = await get<{ data?: Match[] } | Match[]>("/matches", {
-    leagueId: LEAGUE_ID,
-    date: day,
-    season: currentSeason(),
-    timezone: "Etc/UTC"
-  });
+  const data = await get<{ data?: Match[] } | Match[]>(
+    "/matches",
+    {
+      leagueId: LEAGUE_ID,
+      date: day,
+      season: currentSeason(),
+      timezone: "Etc/UTC"
+    },
+    REVALIDATE_MATCHES
+  );
   return Array.isArray(data) ? data : data.data ?? [];
 }
 
 /**
  * Fetch matches across a date range.
- * pastDays: how many days before startDate (inclusive of startDate via days).
- * days: how many days from startDate forward.
+ * Keep windows small — each day is one API request.
  */
 export async function getMatchesWindow(
   startDate: string,
-  days = 7,
-  pastDays = 0
+  days = 4,
+  pastDays = 2
 ): Promise<Match[]> {
   if (!LEAGUE_ID) return [];
   const start = new Date(startDate + "T00:00:00.000Z");
-  const back = Math.min(Math.max(pastDays, 0), 14);
-  const forward = Math.min(Math.max(days, 1), 14);
+  const back = Math.min(Math.max(pastDays, 0), 7);
+  const forward = Math.min(Math.max(days, 1), 7);
   const offsets: number[] = [];
   for (let i = -back; i < forward; i++) offsets.push(i);
 
@@ -164,7 +172,11 @@ export async function getMatchesWindow(
 export async function getMatchById(id: number): Promise<Match | null> {
   if (!LEAGUE_ID) return null;
   try {
-    const data = await get<Match | Match[] | { data?: Match }>(`/matches/${id}`, {}, 60);
+    const data = await get<Match | Match[] | { data?: Match }>(
+      `/matches/${id}`,
+      {},
+      REVALIDATE_MATCH
+    );
     if (Array.isArray(data)) return data[0] ?? null;
     if (data && typeof data === "object" && "data" in data) {
       return (data as { data?: Match }).data ?? null;
@@ -182,13 +194,17 @@ export async function getHighlights(date?: string): Promise<Highlight[]> {
     season: currentSeason()
   };
   if (date) params.date = date;
-  const data = await get<{ data?: Highlight[] } | Highlight[]>("/highlights", params, 300);
+  const data = await get<{ data?: Highlight[] } | Highlight[]>(
+    "/highlights",
+    params,
+    REVALIDATE_HIGHLIGHTS
+  );
   return Array.isArray(data) ? data : data.data ?? [];
 }
 
 export async function getTeam(id: number): Promise<Team | null> {
   try {
-    const data = await get<Team | Team[]>(`/teams/${id}`, {}, 3600);
+    const data = await get<Team | Team[]>(`/teams/${id}`, {}, REVALIDATE_TEAM);
     if (Array.isArray(data)) return data[0] ?? null;
     return data;
   } catch {
@@ -198,9 +214,11 @@ export async function getTeam(id: number): Promise<Team | null> {
 
 export async function getLastFive(teamId: number): Promise<Match[]> {
   try {
-    const data = await get<Match[] | { data?: Match[] }>("/last-five-games", {
-      teamId
-    }, 300);
+    const data = await get<Match[] | { data?: Match[] }>(
+      "/last-five-games",
+      { teamId },
+      REVALIDATE_MATCHES
+    );
     return Array.isArray(data) ? data : data.data ?? [];
   } catch {
     return [];
@@ -288,9 +306,13 @@ export function sortStandings(rows: StandingRow[]): StandingRow[] {
 
 export async function getStandings(): Promise<Standings | null> {
   if (!LEAGUE_ID) return null;
-  const data = await get<Standings>("/standings", {
-    leagueId: LEAGUE_ID,
-    season: currentSeason()
-  }, 3600);
+  const data = await get<Standings>(
+    "/standings",
+    {
+      leagueId: LEAGUE_ID,
+      season: currentSeason()
+    },
+    REVALIDATE_STANDINGS
+  );
   return data;
 }

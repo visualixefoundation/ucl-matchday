@@ -8,7 +8,7 @@ import {
 import { dayKeyEAT, formatDayLabelEAT } from "@/lib/time";
 import MatchRow from "@/app/components/MatchRow";
 
-export const revalidate = 120;
+export const revalidate = 300;
 
 function formatHighlightDate(dateIso: string) {
   return new Date(dateIso).toLocaleDateString("en-GB", {
@@ -26,8 +26,9 @@ export default async function ResultsPage() {
   let errorMessage: string | null = null;
 
   try {
+    // Overlaps home window so Next.js data cache can reuse those day fetches
     const [window, hl] = await Promise.all([
-      getMatchesWindow(today, 1, 10), // last ~10 days through today
+      getMatchesWindow(today, 1, 3), // past 3 days + today = 4 calls max
       getHighlights().catch(() => [] as Highlight[])
     ]);
     finished = window
