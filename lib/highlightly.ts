@@ -102,6 +102,9 @@ export type MatchEvent = {
   player?: string | { name?: string };
   team?: string | { name?: string };
   description?: string;
+  /** Player coming ON (substitution). API: player = off, substituted = on. */
+  substituted?: string | null;
+  assist?: string | null;
 };
 
 export type Highlight = {
@@ -234,7 +237,6 @@ export function isLive(description: string): boolean {
 export function isFinished(description: string): boolean {
   const d = description.toLowerCase().trim();
   if (FINISHED_DESCRIPTIONS.some((x) => d === x || d.includes(x))) return true;
-  // API sometimes returns score + clock at 90 with non-live status
   return d.includes("finished");
 }
 
