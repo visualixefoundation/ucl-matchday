@@ -162,6 +162,22 @@ a { color: inherit; text-decoration: none; }
   border-top: 1px solid var(--line); padding: 20px 0 40px;
   color: var(--steel); font-size: 0.82rem;
 }
+.site-footer__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.site-footer__link {
+  color: var(--floodlight);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.site-footer__link:hover {
+  border-color: var(--floodlight);
+  color: var(--chalk);
+}
 
 .refresh-btn {
   font-family: var(--font-body); font-size: 0.85rem;

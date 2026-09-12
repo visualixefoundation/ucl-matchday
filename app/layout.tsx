@@ -37,8 +37,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </header>
         <main>{children}</main>
         <footer className="site-footer">
-          <div className="wrap">
-            Scores and highlights via Highlightly. Not affiliated with UEFA.
+          <div className="wrap site-footer__inner">
+            <span>
+              Scores and highlights via Highlightly. Not affiliated with UEFA.
+            </span>
+            <a
+              href="https://visualixe-foundation.vercel.app/"
+              className="site-footer__link"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Visualixe Foundation
+            </a>
           </div>
         </footer>
       </body>
