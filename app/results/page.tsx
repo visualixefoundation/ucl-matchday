@@ -83,22 +83,6 @@ export default async function ResultsPage() {
         </div>
       )}
 
-      {!errorMessage && finished.length === 0 && highlights.length === 0 && (
-        <div className="empty-state">
-          <strong>No recent highlights yet</strong>
-          Check{" "}
-          <a
-            href={SUPERSPORT_UCL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-link"
-          >
-            SuperSport
-          </a>{" "}
-          for Champions League videos, or come back after the next matchday.
-        </div>
-      )}
-
       {dayKeys.length > 0 && (
         <section className="matchday" style={{ marginBottom: 48 }}>
           <div className="matchday__label">Full-time results</div>
