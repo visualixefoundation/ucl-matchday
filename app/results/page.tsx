@@ -30,7 +30,8 @@ export default async function ResultsPage() {
 
   try {
     const [window, hl] = await Promise.all([
-      getMatchesWindow(today, 1, 2),
+      // Same past window as home so MD1 FT scores appear here too
+      getMatchesWindow(today, 1, 10),
       getHighlights().catch(() => [] as Highlight[])
     ]);
     finished = window

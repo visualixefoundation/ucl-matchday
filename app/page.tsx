@@ -13,8 +13,9 @@ export default async function HomePage() {
   let errorMessage: string | null = null;
 
   try {
-    // Past 1 + next 3 days = 4 API calls max when cache is cold
-    matches = await getMatchesWindow(today, 3, 1);
+    // Past 10 days covers last league-phase matchday (MD1 was 8–10 Sep);
+    // next 2 days for any imminent fixtures. ~12 API calls when cache is cold.
+    matches = await getMatchesWindow(today, 2, 10);
   } catch (err) {
     errorMessage = err instanceof Error ? err.message : "Failed to load fixtures.";
   }
@@ -26,7 +27,8 @@ export default async function HomePage() {
     return acc;
   }, {});
 
-  const dayKeys = Object.keys(byDay).sort();
+  // Newest matchdays first so last round scores sit at the top
+  const dayKeys = Object.keys(byDay).sort().reverse();
 
   const nextMatch = matches
     .filter((m) => m.state.description.toLowerCase() === "not started")

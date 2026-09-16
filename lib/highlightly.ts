@@ -13,7 +13,6 @@ const BASE_URL =
     : "https://soccer.highlightly.net";
 
 // Long TTLs: between matchdays data barely changes.
-// On matchdays you can lower these temporarily if you need livelier scores.
 const REVALIDATE_MATCHES = 6 * 60 * 60; // 6 hours
 const REVALIDATE_MATCH = 60 * 60; // 1 hour
 const REVALIDATE_STANDINGS = 24 * 60 * 60; // 24 hours
@@ -139,16 +138,19 @@ export async function getMatches(date?: string): Promise<Match[]> {
   return Array.isArray(data) ? data : data.data ?? [];
 }
 
-/** Each calendar day = 1 API request. Keep the window tiny. */
+/**
+ * Fetch matches across a date range. Each calendar day = 1 API request.
+ * Cap raised so last league-phase matchday (often ~7–10 days back) still appears.
+ */
 export async function getMatchesWindow(
   startDate: string,
   days = 3,
-  pastDays = 1
+  pastDays = 10
 ): Promise<Match[]> {
   if (!LEAGUE_ID) return [];
   const start = new Date(startDate + "T00:00:00.000Z");
-  const back = Math.min(Math.max(pastDays, 0), 5);
-  const forward = Math.min(Math.max(days, 1), 5);
+  const back = Math.min(Math.max(pastDays, 0), 14);
+  const forward = Math.min(Math.max(days, 1), 7);
   const offsets: number[] = [];
   for (let i = -back; i < forward; i++) offsets.push(i);
 
