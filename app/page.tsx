@@ -27,8 +27,8 @@ export default async function HomePage() {
     return acc;
   }, {});
 
-  // Newest matchdays first so last round scores sit at the top
-  const dayKeys = Object.keys(byDay).sort().reverse();
+  // Chronological: Tue → Wed → Thu
+  const dayKeys = Object.keys(byDay).sort();
 
   const nextMatch = matches
     .filter((m) => m.state.description.toLowerCase() === "not started")
@@ -41,7 +41,7 @@ export default async function HomePage() {
   return (
     <div className="page wrap">
       <div className="page__heading">
-        <h1>Fixtures &amp; live scores</h1>
+        <h1>Fixtures & live scores</h1>
         <RefreshButton />
       </div>
 
@@ -57,7 +57,7 @@ export default async function HomePage() {
           <strong>
             {quotaHit
               ? "API daily limit reached"
-              : "Couldn&apos;t load fixtures"}
+              : "Couldn't load fixtures"}
           </strong>
           {quotaHit
             ? "Highlightly free tier is exhausted for today. Data returns after the daily reset (around 03:00 EAT)."
