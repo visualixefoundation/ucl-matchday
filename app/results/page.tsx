@@ -8,7 +8,7 @@ import {
 import { dayKeyEAT, formatDayLabelEAT } from "@/lib/time";
 import MatchRow from "@/app/components/MatchRow";
 
-export const revalidate = 300;
+export const revalidate = 21600; // 6 hours
 
 const SUPERSPORT_UCL =
   "https://www.supersport.com/football/uefa-champions-league";
@@ -30,7 +30,7 @@ export default async function ResultsPage() {
 
   try {
     const [window, hl] = await Promise.all([
-      getMatchesWindow(today, 1, 3),
+      getMatchesWindow(today, 1, 2),
       getHighlights().catch(() => [] as Highlight[])
     ]);
     finished = window

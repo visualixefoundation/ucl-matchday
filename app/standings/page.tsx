@@ -1,6 +1,6 @@
 import { getStandings, sortStandings, type StandingRow } from "@/lib/highlightly";
 
-export const revalidate = 3600;
+export const revalidate = 86400; // 24 hours
 
 function gd(row: StandingRow) {
   return row.total.scoredGoals - row.total.receivedGoals;
@@ -24,6 +24,10 @@ export default async function StandingsPage() {
     errorMessage = err instanceof Error ? err.message : "Failed to load standings.";
   }
 
+  const quotaHit =
+    errorMessage?.includes("429") ||
+    errorMessage?.toLowerCase().includes("daily request");
+
   return (
     <div className="page wrap">
       <div className="page__heading">
@@ -32,8 +36,12 @@ export default async function StandingsPage() {
 
       {errorMessage && (
         <div className="empty-state">
-          <strong>Couldn&apos;t load standings</strong>
-          {errorMessage}
+          <strong>
+            {quotaHit ? "API daily limit reached" : "Couldn&apos;t load standings"}
+          </strong>
+          {quotaHit
+            ? "Highlightly free tier is exhausted for today. Table returns after the daily reset (around 03:00 EAT)."
+            : errorMessage}
         </div>
       )}
 

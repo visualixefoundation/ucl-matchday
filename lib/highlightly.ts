@@ -1,8 +1,7 @@
-// Thin wrapper around the Highlightly Football API, scoped to one competition:
-// the UEFA Champions League.
+// Thin wrapper around the Highlightly Football API (UEFA Champions League).
 //
-// Free tier = 100 req/day. Keep windows small and revalidate long so browsing
-// stays well under the limit.
+// Free tier = 100 req/day. Public Vercel sites get crawled by bots; short ISR
+// TTLs will burn the quota even if you never open the site. Cache aggressively.
 
 const SOURCE = process.env.HIGHLIGHTLY_SOURCE === "rapidapi" ? "rapidapi" : "direct";
 const API_KEY = process.env.HIGHLIGHTLY_API_KEY;
@@ -13,12 +12,13 @@ const BASE_URL =
     ? "https://football-highlights-api.p.rapidapi.com"
     : "https://soccer.highlightly.net";
 
-// Default cache TTLs (seconds) — long enough that light browsing reuses cache
-const REVALIDATE_MATCHES = 300; // 5 min
-const REVALIDATE_MATCH = 120;
-const REVALIDATE_STANDINGS = 3600;
-const REVALIDATE_HIGHLIGHTS = 600;
-const REVALIDATE_TEAM = 3600;
+// Long TTLs: between matchdays data barely changes.
+// On matchdays you can lower these temporarily if you need livelier scores.
+const REVALIDATE_MATCHES = 6 * 60 * 60; // 6 hours
+const REVALIDATE_MATCH = 60 * 60; // 1 hour
+const REVALIDATE_STANDINGS = 24 * 60 * 60; // 24 hours
+const REVALIDATE_HIGHLIGHTS = 12 * 60 * 60; // 12 hours
+const REVALIDATE_TEAM = 24 * 60 * 60; // 24 hours
 
 function headers(): HeadersInit {
   if (!API_KEY) {
@@ -139,19 +139,16 @@ export async function getMatches(date?: string): Promise<Match[]> {
   return Array.isArray(data) ? data : data.data ?? [];
 }
 
-/**
- * Fetch matches across a date range.
- * Keep windows small — each day is one API request.
- */
+/** Each calendar day = 1 API request. Keep the window tiny. */
 export async function getMatchesWindow(
   startDate: string,
-  days = 4,
-  pastDays = 2
+  days = 3,
+  pastDays = 1
 ): Promise<Match[]> {
   if (!LEAGUE_ID) return [];
   const start = new Date(startDate + "T00:00:00.000Z");
-  const back = Math.min(Math.max(pastDays, 0), 7);
-  const forward = Math.min(Math.max(days, 1), 7);
+  const back = Math.min(Math.max(pastDays, 0), 5);
+  const forward = Math.min(Math.max(days, 1), 5);
   const offsets: number[] = [];
   for (let i = -back; i < forward; i++) offsets.push(i);
 

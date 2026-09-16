@@ -4,8 +4,8 @@ import RefreshButton from "./components/RefreshButton";
 import KickoffCountdown from "./components/KickoffCountdown";
 import MatchRow from "./components/MatchRow";
 
-// Page-level ISR — avoids regenerating (and re-hitting API) every minute
-export const revalidate = 300;
+// Long ISR — bots/crawlers must not re-hit Highlightly every few minutes
+export const revalidate = 21600; // 6 hours
 
 export default async function HomePage() {
   const today = new Date().toISOString().slice(0, 10);
@@ -13,8 +13,8 @@ export default async function HomePage() {
   let errorMessage: string | null = null;
 
   try {
-    // Past 2 days + next 4 days = 6 API calls max (shared cache with /results)
-    matches = await getMatchesWindow(today, 4, 2);
+    // Past 1 + next 3 days = 4 API calls max when cache is cold
+    matches = await getMatchesWindow(today, 3, 1);
   } catch (err) {
     errorMessage = err instanceof Error ? err.message : "Failed to load fixtures.";
   }
@@ -32,6 +32,10 @@ export default async function HomePage() {
     .filter((m) => m.state.description.toLowerCase() === "not started")
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
 
+  const quotaHit =
+    errorMessage?.includes("429") ||
+    errorMessage?.toLowerCase().includes("daily request");
+
   return (
     <div className="page wrap">
       <div className="page__heading">
@@ -48,15 +52,21 @@ export default async function HomePage() {
 
       {errorMessage && (
         <div className="empty-state">
-          <strong>Couldn&apos;t load fixtures</strong>
-          {errorMessage}
+          <strong>
+            {quotaHit
+              ? "API daily limit reached"
+              : "Couldn&apos;t load fixtures"}
+          </strong>
+          {quotaHit
+            ? "Highlightly free tier is exhausted for today. Data returns after the daily reset (around 03:00 EAT)."
+            : errorMessage}
         </div>
       )}
 
       {!errorMessage && matches.length === 0 && (
         <div className="empty-state">
           <strong>No Champions League matches in this window</strong>
-          Check the standings or results, or come back closer to the next matchday.
+          Next league-phase matchday is mid-October. Check standings, or SuperSport for highlights.
         </div>
       )}
 
