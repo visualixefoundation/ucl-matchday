@@ -1,21 +1,17 @@
-import { getMatchesWindow, type Match } from "@/lib/highlightly";
+import { getLeaguePhaseMatches, type Match } from "@/lib/highlightly";
 import { dayKeyEAT, formatDayLabelEAT } from "@/lib/time";
 import RefreshButton from "./components/RefreshButton";
 import KickoffCountdown from "./components/KickoffCountdown";
 import MatchRow from "./components/MatchRow";
 
-// Long ISR — bots/crawlers must not re-hit Highlightly every few minutes
 export const revalidate = 21600; // 6 hours
 
 export default async function HomePage() {
-  const today = new Date().toISOString().slice(0, 10);
   let matches: Match[] = [];
   let errorMessage: string | null = null;
 
   try {
-    // Past 10 days covers last league-phase matchday (MD1 was 8–10 Sep);
-    // next 2 days for any imminent fixtures. ~12 API calls when cache is cold.
-    matches = await getMatchesWindow(today, 2, 10);
+    matches = await getLeaguePhaseMatches();
   } catch (err) {
     errorMessage = err instanceof Error ? err.message : "Failed to load fixtures.";
   }
@@ -41,7 +37,7 @@ export default async function HomePage() {
   return (
     <div className="page wrap">
       <div className="page__heading">
-        <h1>Fixtures & live scores</h1>
+        <h1>Fixtures &amp; live scores</h1>
         <RefreshButton />
       </div>
 
@@ -57,7 +53,7 @@ export default async function HomePage() {
           <strong>
             {quotaHit
               ? "API daily limit reached"
-              : "Couldn't load fixtures"}
+              : "Couldn&apos;t load fixtures"}
           </strong>
           {quotaHit
             ? "Highlightly free tier is exhausted for today. Data returns after the daily reset (around 03:00 EAT)."
@@ -67,7 +63,7 @@ export default async function HomePage() {
 
       {!errorMessage && matches.length === 0 && (
         <div className="empty-state">
-          <strong>No Champions League matches in this window</strong>
+          <strong>No Champions League matches loaded</strong>
           Next league-phase matchday is mid-October. Check standings, or SuperSport for highlights.
         </div>
       )}

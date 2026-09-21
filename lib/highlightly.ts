@@ -1,7 +1,6 @@
 // Thin wrapper around the Highlightly Football API (UEFA Champions League).
 //
-// Free tier = 100 req/day. Public Vercel sites get crawled by bots; short ISR
-// TTLs will burn the quota even if you never open the site. Cache aggressively.
+// Free tier = 100 req/day. Prefer known matchday dates over scanning every day.
 
 const SOURCE = process.env.HIGHLIGHTLY_SOURCE === "rapidapi" ? "rapidapi" : "direct";
 const API_KEY = process.env.HIGHLIGHTLY_API_KEY;
@@ -12,12 +11,39 @@ const BASE_URL =
     ? "https://football-highlights-api.p.rapidapi.com"
     : "https://soccer.highlightly.net";
 
-// Long TTLs: between matchdays data barely changes.
 const REVALIDATE_MATCHES = 6 * 60 * 60; // 6 hours
-const REVALIDATE_MATCH = 60 * 60; // 1 hour
-const REVALIDATE_STANDINGS = 24 * 60 * 60; // 24 hours
-const REVALIDATE_HIGHLIGHTS = 12 * 60 * 60; // 12 hours
-const REVALIDATE_TEAM = 24 * 60 * 60; // 24 hours
+const REVALIDATE_MATCH = 60 * 60;
+const REVALIDATE_STANDINGS = 24 * 60 * 60;
+const REVALIDATE_HIGHLIGHTS = 12 * 60 * 60;
+const REVALIDATE_TEAM = 24 * 60 * 60;
+
+/** 2026/27 UCL league-phase matchday dates (from UEFA schedule). */
+const UCL_MATCHDAY_DATES: string[] = [
+  // Matchday 1
+  "2026-09-08",
+  "2026-09-09",
+  "2026-09-10",
+  // Matchday 2
+  "2026-10-13",
+  "2026-10-14",
+  // Matchday 3
+  "2026-10-20",
+  "2026-10-21",
+  // Matchday 4
+  "2026-11-03",
+  "2026-11-04",
+  // Matchday 5
+  "2026-11-24",
+  "2026-11-25",
+  // Matchday 6
+  "2026-12-08",
+  "2026-12-09",
+  // Matchday 7
+  "2027-01-19",
+  "2027-01-20",
+  // Matchday 8
+  "2027-01-27"
+];
 
 function headers(): HeadersInit {
   if (!API_KEY) {
@@ -71,6 +97,13 @@ export function addDaysUTC(base: Date, days: number): Date {
   const d = new Date(base);
   d.setUTCDate(d.getUTCDate() + days);
   return d;
+}
+
+function daysBetween(a: string, b: string): number {
+  const ms =
+    new Date(b + "T00:00:00.000Z").getTime() -
+    new Date(a + "T00:00:00.000Z").getTime();
+  return Math.round(ms / (24 * 60 * 60 * 1000));
 }
 
 type Team = {
@@ -139,17 +172,45 @@ export async function getMatches(date?: string): Promise<Match[]> {
 }
 
 /**
- * Fetch matches across a date range. Each calendar day = 1 API request.
- * Cap raised so last league-phase matchday (often ~7–10 days back) still appears.
+ * Last completed + next upcoming league-phase matchday clusters only.
+ * Avoids scanning empty midweek days and keeps free-tier usage low.
  */
+export async function getLeaguePhaseMatches(): Promise<Match[]> {
+  if (!LEAGUE_ID) return [];
+  const today = new Date().toISOString().slice(0, 10);
+
+  const past = UCL_MATCHDAY_DATES.filter((d) => d <= today).slice(-4); // last ~cluster
+  const upcoming = UCL_MATCHDAY_DATES.filter((d) => d > today).slice(0, 4);
+  const dates = Array.from(new Set([...past, ...upcoming]));
+
+  // Always include today-ish window in case schedule drifts
+  const start = new Date(today + "T00:00:00.000Z");
+  for (let i = -1; i <= 2; i++) {
+    dates.push(isoDateUTC(addDaysUTC(start, i)));
+  }
+  const unique = Array.from(new Set(dates)).sort();
+
+  const results = await Promise.all(
+    unique.map((d) => getMatches(d).catch(() => [] as Match[]))
+  );
+  const byId = new Map<number, Match>();
+  for (const batch of results) {
+    for (const m of batch) byId.set(m.id, m);
+  }
+  return Array.from(byId.values()).sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+}
+
+/** @deprecated Prefer getLeaguePhaseMatches — kept for results page overlap. */
 export async function getMatchesWindow(
   startDate: string,
   days = 3,
-  pastDays = 10
+  pastDays = 14
 ): Promise<Match[]> {
   if (!LEAGUE_ID) return [];
   const start = new Date(startDate + "T00:00:00.000Z");
-  const back = Math.min(Math.max(pastDays, 0), 14);
+  const back = Math.min(Math.max(pastDays, 0), 21);
   const forward = Math.min(Math.max(days, 1), 7);
   const offsets: number[] = [];
   for (let i = -back; i < forward; i++) offsets.push(i);
@@ -315,3 +376,6 @@ export async function getStandings(): Promise<Standings | null> {
   );
   return data;
 }
+
+// silence unused helper warning in some builds
+void daysBetween;

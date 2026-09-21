@@ -1,5 +1,5 @@
 import {
-  getMatchesWindow,
+  getLeaguePhaseMatches,
   getHighlights,
   isFinished,
   type Match,
@@ -23,15 +23,13 @@ function formatHighlightDate(dateIso: string) {
 }
 
 export default async function ResultsPage() {
-  const today = new Date().toISOString().slice(0, 10);
   let finished: Match[] = [];
   let highlights: Highlight[] = [];
   let errorMessage: string | null = null;
 
   try {
     const [window, hl] = await Promise.all([
-      // Same past window as home so MD1 FT scores appear here too
-      getMatchesWindow(today, 1, 10),
+      getLeaguePhaseMatches(),
       getHighlights().catch(() => [] as Highlight[])
     ]);
     finished = window
@@ -48,7 +46,8 @@ export default async function ResultsPage() {
     acc[key].push(m);
     return acc;
   }, {});
-  const dayKeys = Object.keys(byDay).sort().reverse();
+  // Results: newest day first is fine; within a matchday cluster still Tue→Thu via day key sort if reversed groups
+  const dayKeys = Object.keys(byDay).sort();
 
   return (
     <div className="page wrap">
